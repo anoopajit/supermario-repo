@@ -29,11 +29,13 @@ jobs:
       - name: Ensure version.txt exists
         run: |
           if [ ! -f version.txt ]; then echo "0" > version.txt; fi
-      - name: Calculate new version
-        id: version
+      - name: Calculate next version
+        id: setversion
         run: |
           VERSION=$(( $(cat version.txt) + 1 ))
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Debug VERSION
+        run: echo "VERSION=${{ env.VERSION }}"
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Build and Push Docker Image
@@ -47,6 +49,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+      - name: Debug VERSION
+        run: echo "VERSION=${{ env.VERSION }}"
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Get Docker Image from Docker Hub
@@ -54,7 +58,7 @@ jobs:
           set -e
           docker pull docker.io/anoopajit89/supermariogitopsproject:${{ env.VERSION }}
           docker save -o supermariolatestdockerimage.tar docker.io/anoopajit89/supermariogitopsproject:${{ env.VERSION }}
-          ls -lh
+          ls -lh supermariolatestdockerimage.tar
       - name: Run Trivy vulnerability scanner in tarball mode
         uses: aquasecurity/trivy-action@master
         with:
@@ -72,12 +76,11 @@ jobs:
         run: |
           git config --global user.email "${{ secrets.GIT_EMAIL}}"
           git config --global user.name "${{ secrets.GIT_USERNAME}}"
-      - name: Update Deployment YAML
+      - name: Update Deployment YAML and version.txt
         run: |
           git pull
           sed -i "s|image: anoopajit89/supermariogitopsproject:.*$|image: anoopajit89/supermariogitopsproject:${{ env.VERSION }}|" deployment.yaml
-          echo ${{ env.VERSION }} > version.txt
-          CURRENT_VERSION=$(cat version.txt)
+          echo "${{ env.VERSION }}" > version.txt
           git add deployment.yaml version.txt
-          git commit -m "Updated deployment yaml and version txt file with supermario image tag to ${CURRENT_VERSION}"
+          git commit -m "Updated deployment yaml and version txt file with supermario image tag to ${{ env.VERSION }}" || echo "No changes to commit"
           git push
