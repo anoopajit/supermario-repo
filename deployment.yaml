@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: supermariogame-container
-        image: anoopajit89/supermariogitopsproject:latest
+        image: anoopajit89/supermariogitopsproject:
         ports:
         - containerPort: 8080
 
