@@ -62,12 +62,12 @@ jobs:
         run: |
           set -e
           docker pull docker.io/anoopajit89/supermariogitopsproject:${{ env.VERSION }}
-          docker save -o supermariolatestdockerimage.tar docker.io/anoopajit89/supermariogitopsproject:${{ env.VERSION }}
-          ls -lh supermariolatestdockerimage.tar
+          docker save -o $GITHUB_WORKSPACE/supermariolatestdockerimage.tar docker.io/anoopajit89/supermariogitopsproject:${{ env.VERSION }}
+          ls -lh $GITHUB_WORKSPACE/supermariolatestdockerimage.tar
       - name: Run Trivy vulnerability scanner in tarball mode
         uses: aquasecurity/trivy-action@master
         with:
-          input: /github/workspace/supermariolatestdockerimage.tar
+          input: ${{ github.workspace }}/supermariolatestdockerimage.tar
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
 
